@@ -130,3 +130,14 @@ class TMDBClient:
 
     def movie(self, tmdb_id: int) -> Movie:
         return Movie.model_validate(self._get(f"/movie/{tmdb_id}", append_to_response="credits,keywords"))
+
+    def recommendations(self, tmdb_id: int) -> list[SearchResult]:
+        """TMDB's own "if you liked this" list (first page, up to 20 films)."""
+        return [
+            SearchResult.model_validate(r) for r in self._get(f"/movie/{tmdb_id}/recommendations")["results"]
+        ]
+
+    def most_voted(self, page: int) -> list[SearchResult]:
+        """Films with the most votes on TMDB, 20 per page."""
+        data = self._get("/discover/movie", sort_by="vote_count.desc", page=str(page))
+        return [SearchResult.model_validate(r) for r in data["results"]]

@@ -1,0 +1,60 @@
+"""Scorers: each learns from the user's ratings, then scores any catalog film (higher = better)."""
+
+from typing import Protocol
+
+import numpy as np
+import polars as pl
+
+
+class Scorer(Protocol):
+    name: str
+
+    def fit(self, rated: pl.DataFrame) -> None:
+        """rated: the user's known ratings (columns tmdb_id, rating)."""
+
+    def score(self, ids: np.ndarray) -> np.ndarray: ...
+
+
+class RandomScorer:
+    name = "Random"
+
+    def __init__(self, seed: int = 0) -> None:
+        self._rng = np.random.default_rng(seed)
+
+    def fit(self, rated: pl.DataFrame) -> None:
+        pass
+
+    def score(self, ids: np.ndarray) -> np.ndarray:
+        return self._rng.random(len(ids))
+
+
+class PopularityScorer:
+    name = "Popularity (TMDB)"
+
+    def __init__(self, catalog: pl.DataFrame) -> None:
+        self._values = dict(zip(catalog["tmdb_id"], catalog["popularity"], strict=True))
+
+    def fit(self, rated: pl.DataFrame) -> None:
+        pass
+
+    def score(self, ids: np.ndarray) -> np.ndarray:
+        return np.array([self._values[i] for i in ids])
+
+
+class QualityScorer:
+    """TMDB average rating, shrunk towards the catalog mean when there are few votes (Bayesian average)."""
+
+    name = "Quality (TMDB rating)"
+
+    def __init__(self, catalog: pl.DataFrame, prior_votes: int = 1000) -> None:
+        mean = float(catalog["vote_average"].mean())  # type: ignore[arg-type]
+        weighted = (catalog["vote_average"] * catalog["vote_count"] + prior_votes * mean) / (
+            catalog["vote_count"] + prior_votes
+        )
+        self._values = dict(zip(catalog["tmdb_id"], weighted, strict=True))
+
+    def fit(self, rated: pl.DataFrame) -> None:
+        pass
+
+    def score(self, ids: np.ndarray) -> np.ndarray:
+        return np.array([self._values[i] for i in ids])
