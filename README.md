@@ -8,15 +8,17 @@ Film recommendations from a Letterboxd export, enriched with TMDB metadata.
 2. **Catalog**: candidate films = TMDB recommendations of every rated film + the 1,000 most voted films (~3,700 films).
 3. **Evaluation**: 5-fold cross-validation on the ratings, repeated 10 times. What counts is *liking* a film, not watching it:
    - *taste AUC*: chance that a hidden film rated ≥ 4 scores above one rated ≤ 3;
-   - *recall@100*: share of hidden films rated ≥ 4 that reach the top 100 of the whole catalog.
+   - *recall@100*: share of hidden films rated ≥ 4 that reach the top 100 of the whole catalog. Secondary: watched films are chosen, often for being popular or acclaimed, so this metric partly rewards guessing what gets watched.
+4. **Content**: each film is embedded from its TMDB description (genres, keywords, director, cast, overview) with `multilingual-e5-small`. Every rated film votes for similar films, weighted by its rating minus the user's mean rating.
 
 ## Results
 
 | Scorer | Taste AUC | Recall@100 |
 |---|---:|---:|
 | Random | 0.51 | 5 % |
-| Popularity (TMDB) | 0.57 | 30 % |
-| Quality (TMDB rating, Bayesian average) | 0.71 | 40 % |
+| Popularity (TMDB) | 0.57 | 29 % |
+| Quality (TMDB rating, Bayesian average) | 0.70 | 40 % |
+| Content (embedding similarity) | 0.71 | 4 % |
 
 ## Usage
 

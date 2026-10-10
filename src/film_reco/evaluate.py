@@ -37,7 +37,8 @@ def recall_at_k(target_scores: np.ndarray, other_scores: np.ndarray, k: int = TO
 
 def load_rated(settings: Settings) -> pl.DataFrame:
     ratings = pl.read_parquet(settings.data_dir / "ratings.parquet")
-    return ratings.filter(pl.col("tmdb_id").is_not_null()).unique("tmdb_id").select("tmdb_id", "rating")
+    rated = ratings.filter(pl.col("tmdb_id").is_not_null()).unique("tmdb_id", maintain_order=True)
+    return rated.select("tmdb_id", "rating")  # fixed order: the same folds on every run
 
 
 def evaluate(
