@@ -79,4 +79,4 @@ class SimilarityScorer:
 
     def score(self, ids: np.ndarray) -> np.ndarray:
         similarity = self._vectors[[self._row[int(i)] for i in ids]] @ self._rated.T  # candidates x rated
-        return np.asarray(similarity @ self._weights)
+        return np.asarray(similarity @ self._weights) / len(self._weights)  # same scale for any profile size
