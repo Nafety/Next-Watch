@@ -10,6 +10,7 @@ Film recommendations from a Letterboxd export, enriched with TMDB metadata.
    - *taste AUC*: chance that a hidden film rated ≥ 4 scores above one rated ≤ 3;
    - *recall@100*: share of hidden films rated ≥ 4 that reach the top 100 of the whole catalog. Secondary: watched films are chosen, often for being popular or acclaimed, so this metric partly rewards guessing what gets watched.
 4. **Content**: each film is embedded from its TMDB description (genres, keywords, director, cast, overview) with `multilingual-e5-small`. Every rated film votes for similar films, weighted by its rating minus the user's mean rating.
+5. **Collaborative**: a truncated SVD of the [MovieLens 32M](https://grouplens.org/datasets/movielens/32m/) ratings gives each film a 128-dimension vector (close when liked by the same people); same voting as above. MovieLens knows 76 % of the catalog (it stops in 2023).
 
 ## Results
 
@@ -17,8 +18,9 @@ Film recommendations from a Letterboxd export, enriched with TMDB metadata.
 |---|---:|---:|
 | Random | 0.51 | 5 % |
 | Popularity (TMDB) | 0.57 | 29 % |
-| Quality (TMDB rating, Bayesian average) | 0.70 | 40 % |
+| Quality (TMDB rating, Bayesian average) | 0.71 | 40 % |
 | Content (embedding similarity) | 0.71 | 4 % |
+| Collaborative (MovieLens SVD) | 0.68 | 17 % |
 
 ## Usage
 
@@ -28,6 +30,7 @@ cp .env.example .env               # add your TMDB API key
 # put your Letterboxd export (letterboxd-*.zip) in data/
 uv run film-reco ingest            # -> data/films.parquet, ratings.parquet, watchlist.parquet
 uv run film-reco catalog           # -> data/catalog.parquet
+# download https://files.grouplens.org/datasets/movielens/ml-32m.zip into data/movielens/
 uv run film-reco evaluate          # results table
 ```
 

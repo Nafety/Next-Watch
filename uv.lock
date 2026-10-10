@@ -281,6 +281,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "rapidfuzz" },
+    { name = "scikit-learn" },
     { name = "sentence-transformers" },
     { name = "tenacity" },
 ]
@@ -303,6 +304,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.14.0" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "rapidfuzz", specifier = ">=3.14.6" },
+    { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "sentence-transformers", specifier = ">=6.1.0" },
     { name = "tenacity", specifier = ">=9.2.1" },
 ]

@@ -40,30 +40,3 @@ def content_embeddings(settings: Settings, catalog: pl.DataFrame) -> np.ndarray:
     )
     np.savez(cache, ids=ids, vectors=vectors)
     return vectors
-
-
-class ContentScorer:
-    """Each rated film votes for similar films, weighted by (rating - the user's mean rating).
-
-    neighbours=None: every rated film votes (a single taste profile).
-    neighbours=k: only the k rated films most similar to the candidate vote (copes with varied tastes).
-    """
-
-    def __init__(self, ids: np.ndarray, vectors: np.ndarray, neighbours: int | None = None) -> None:
-        self._row = {int(i): n for n, i in enumerate(ids)}
-        self._vectors = vectors
-        self._k = neighbours
-        self.name = "Content (profile)" if neighbours is None else f"Content ({neighbours} nearest)"
-
-    def fit(self, rated: pl.DataFrame) -> None:
-        ratings = rated["rating"].to_numpy()
-        self._rated = self._vectors[[self._row[int(i)] for i in rated["tmdb_id"]]]
-        self._weights = ratings - ratings.mean()
-
-    def score(self, ids: np.ndarray) -> np.ndarray:
-        similarity = self._vectors[[self._row[int(i)] for i in ids]] @ self._rated.T  # candidates x rated
-        if self._k is None:
-            return np.asarray(similarity @ self._weights)
-        nearest = np.argpartition(-similarity, self._k, axis=1)[:, : self._k]
-        weights = self._weights[nearest]
-        return (np.take_along_axis(similarity, nearest, axis=1) * weights).sum(axis=1)

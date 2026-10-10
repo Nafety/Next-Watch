@@ -26,19 +26,24 @@ def main() -> None:
         import polars as pl
 
         from film_reco import models
-        from film_reco.content import ContentScorer, content_embeddings
+        from film_reco.collaborative import collaborative_embeddings
+        from film_reco.content import content_embeddings
         from film_reco.evaluate import evaluate
 
         catalog = pl.read_parquet(settings.data_dir / "catalog.parquet")
-        ids, vectors = catalog["tmdb_id"].to_numpy(), content_embeddings(settings, catalog)
+        ids = catalog["tmdb_id"].to_numpy()
+        content, collaborative = (
+            content_embeddings(settings, catalog),
+            collaborative_embeddings(settings, catalog),
+        )
 
         def make_scorers() -> list[models.Scorer]:
             return [
                 models.RandomScorer(),
                 models.PopularityScorer(catalog),
                 models.QualityScorer(catalog),
-                ContentScorer(ids, vectors),
-                ContentScorer(ids, vectors, neighbours=20),
+                models.SimilarityScorer("Content (TMDB description)", ids, content),
+                models.SimilarityScorer("Collaborative (MovieLens)", ids, collaborative),
             ]
 
         with pl.Config(tbl_rows=-1, float_precision=3, tbl_hide_dataframe_shape=True):

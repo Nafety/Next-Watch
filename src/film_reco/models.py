@@ -58,3 +58,25 @@ class QualityScorer:
 
     def score(self, ids: np.ndarray) -> np.ndarray:
         return np.array([self._values[i] for i in ids])
+
+
+class SimilarityScorer:
+    """Each rated film votes for similar films, weighted by (rating - the user's mean rating).
+
+    Films are compared through vectors (content embeddings, or collaborative ones); a film without
+    a vector (all zeros) gets a neutral score of 0.
+    """
+
+    def __init__(self, name: str, ids: np.ndarray, vectors: np.ndarray) -> None:
+        self.name = name
+        self._row = {int(i): n for n, i in enumerate(ids)}
+        self._vectors = vectors
+
+    def fit(self, rated: pl.DataFrame) -> None:
+        ratings = rated["rating"].to_numpy()
+        self._rated = self._vectors[[self._row[int(i)] for i in rated["tmdb_id"]]]
+        self._weights = ratings - ratings.mean()
+
+    def score(self, ids: np.ndarray) -> np.ndarray:
+        similarity = self._vectors[[self._row[int(i)] for i in ids]] @ self._rated.T  # candidates x rated
+        return np.asarray(similarity @ self._weights)
