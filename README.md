@@ -12,7 +12,7 @@ Film recommendations from a Letterboxd export, enriched with TMDB metadata, with
 4. **Content**: each film is embedded from its TMDB description (genres, keywords, director, cast, overview) with `multilingual-e5-small`. Every rated film votes for similar films, weighted by its rating minus the user's mean rating.
 5. **Collaborative**: a truncated SVD of the [MovieLens 32M](https://grouplens.org/datasets/movielens/32m/) ratings gives each film a 128-dimension vector (close when liked by the same people); same voting as above. MovieLens knows 87 % of the catalog (it stops in 2023).
 6. **Hybrid**: equal-weight sum of the quality, content and collaborative scores, each standardized over the catalog. Learning the weights with a ridge regression did worse (AUC 0.68): ~160 ratings per fold are too few to fit them reliably.
-7. **Web app** (Streamlit): the catalog's vectors are computed once and shipped with the app; for a visitor, only their own films are searched on TMDB and, when outside the catalog, embedded on the fly.
+7. **Web app** (Streamlit): the catalog's vectors are computed once and shipped with the app (`data/app/`, 15 MB); for a visitor, only their own films are searched on TMDB and, when outside the catalog, embedded on the fly.
 
 ## Results
 
@@ -38,11 +38,11 @@ uv run film-reco ingest            # -> data/films.parquet, ratings.parquet, wat
 uv run film-reco catalog           # -> data/catalog.parquet
 uv run film-reco evaluate          # results table
 uv run film-reco recommend         # top 20 unrated films, with the share of each signal
-uv run film-reco export-app        # -> data/app/ (app data) and dist/space/ (Hugging Face Space)
+uv run film-reco export-app        # -> data/app/, the web app's data (committed, for deployment)
 uv run streamlit run src/film_reco/app.py
 ```
 
-**Deploy** on a Hugging Face Space (Docker): create the Space, add the `TMDB_API_KEY` secret in its settings, then `hf upload <user>/<space> dist/space --repo-type space`.
+**Deploy** on [Streamlit Community Cloud](https://share.streamlit.io): new app from this repository, main file `src/film_reco/app.py`, Python 3.12, and the secret `TMDB_API_KEY = "..."`. Dependencies come from `requirements.txt`, generated from `uv.lock` (see its header).
 
 Development: `uv run pytest`, `uv run ruff check`, `uv run mypy src`.
 

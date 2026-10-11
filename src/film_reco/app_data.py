@@ -5,9 +5,6 @@ vectors.npz: content and collaborative vectors, in the catalog's order.
 movielens.npz: collaborative vectors of every film MovieLens knows, for users' films outside the catalog.
 """
 
-import shutil
-from pathlib import Path
-
 import numpy as np
 import polars as pl
 
@@ -33,15 +30,3 @@ def export_app_data(settings: Settings) -> None:
     np.savez_compressed(out / "movielens.npz", ids=ids, vectors=vectors.astype(np.float16))
     size = sum(f.stat().st_size for f in out.iterdir()) / 1e6
     print(f"App data: {len(catalog)} catalog films, {len(ids)} MovieLens films, {size:.0f} MB in {out}")
-
-
-def build_space(settings: Settings, out: Path = Path("dist/space")) -> None:
-    """Exactly what the Hugging Face Space needs: code, lock file, app data, Dockerfile and Space card."""
-    shutil.rmtree(out, ignore_errors=True)
-    shutil.copytree("src", out / "src", ignore=shutil.ignore_patterns("__pycache__"))
-    shutil.copytree(settings.data_dir / "app", out / "data" / "app")
-    for name in ("pyproject.toml", "uv.lock", ".python-version"):
-        shutil.copy(name, out / name)
-    shutil.copy("deploy/Dockerfile", out / "Dockerfile")
-    shutil.copy("deploy/README.md", out / "README.md")
-    print(f"Space ready in {out}: hf upload <user>/<space> {out} --repo-type space")

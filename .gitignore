@@ -2,7 +2,6 @@
 __pycache__/
 *.py[oc]
 build/
-dist/
 wheels/
 *.egg-info
 
@@ -11,4 +10,6 @@ wheels/
 
 # Local data and secrets
 .env
-data/
+# data/ is local, except the web app's files (shipped for deployment)
+data/*
+!data/app/
