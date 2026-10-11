@@ -16,16 +16,16 @@ class Scorer(Protocol):
 
 
 class RandomScorer:
+    """A random score per film, drawn anew for every fold (and kept for the whole fold)."""
+
     name = "Random"
 
-    def __init__(self, seed: int = 0) -> None:
-        self._rng = np.random.default_rng(seed)
-
     def fit(self, rated: pl.DataFrame) -> None:
-        pass
+        self._rng = np.random.default_rng(int(rated["tmdb_id"].sum()))
+        self._drawn: dict[int, float] = {}
 
     def score(self, ids: np.ndarray) -> np.ndarray:
-        return self._rng.random(len(ids))
+        return np.array([self._drawn.setdefault(int(i), self._rng.random()) for i in ids])
 
 
 class PopularityScorer:

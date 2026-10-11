@@ -4,6 +4,7 @@ import csv
 import io
 import zipfile
 from pathlib import Path
+from typing import IO
 
 import polars as pl
 
@@ -34,7 +35,7 @@ def _favorite_uris(export: zipfile.ZipFile) -> set[str]:
     return uris
 
 
-def read_ratings(path: Path) -> pl.DataFrame:
+def read_ratings(path: Path | IO[bytes]) -> pl.DataFrame:
     """One row per rated film: uri, title, year, rating (0.5-5), rated_on, watched_on (diary), favorite."""
     with zipfile.ZipFile(path) as export:
         ratings = _read_csv(export, "ratings.csv")
@@ -58,7 +59,7 @@ def read_ratings(path: Path) -> pl.DataFrame:
     )
 
 
-def read_watchlist(path: Path) -> pl.DataFrame:
+def read_watchlist(path: Path | IO[bytes]) -> pl.DataFrame:
     with zipfile.ZipFile(path) as export:
         return _read_csv(export, "watchlist.csv").select(
             pl.col("Letterboxd URI").alias("letterboxd_uri"),

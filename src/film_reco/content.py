@@ -1,5 +1,7 @@
 """Step 3: content-based scoring. Films are compared through an embedding of their TMDB description."""
 
+from typing import Any
+
 import numpy as np
 import polars as pl
 
@@ -34,9 +36,15 @@ def content_embeddings(settings: Settings, catalog: pl.DataFrame) -> np.ndarray:
 
     from sentence_transformers import SentenceTransformer
 
-    texts = [f"passage: {film_text(film)}" for film in catalog.iter_rows(named=True)]
-    vectors = SentenceTransformer(EMBEDDER, device="cpu").encode(
-        texts, batch_size=64, normalize_embeddings=True, show_progress_bar=True
-    )
+    model = SentenceTransformer(EMBEDDER, device="cpu")
+    vectors = encode_films(model, list(catalog.iter_rows(named=True)), progress=True)
     np.savez(cache, ids=ids, vectors=vectors)
     return vectors
+
+
+def encode_films(model: Any, films: list[dict[str, object]], progress: bool = False) -> np.ndarray:
+    """Normalized embedding of each film's description (model: a loaded SentenceTransformer)."""
+    texts = [f"passage: {film_text(film)}" for film in films]
+    return np.asarray(
+        model.encode(texts, batch_size=64, normalize_embeddings=True, show_progress_bar=progress)
+    )

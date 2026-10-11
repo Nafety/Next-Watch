@@ -11,3 +11,4 @@ class Settings(BaseSettings):
 
     tmdb_api_key: SecretStr
     data_dir: Path = Path("data")
+    cache_dir: Path = Path("data/cache")  # TMDB responses; must be writable

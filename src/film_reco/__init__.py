@@ -9,6 +9,7 @@ def main() -> None:
     commands.add_parser("ingest", help="read the Letterboxd export and fetch TMDB metadata")
     commands.add_parser("catalog", help="build the catalog of candidate films")
     commands.add_parser("evaluate", help="cross-validate every scorer on the user's ratings")
+    commands.add_parser("export-app", help="write the web app's data and the Hugging Face Space folder")
     recommend = commands.add_parser("recommend", help="best unrated films for the user")
     recommend.add_argument("--top", type=int, default=20)
     args = parser.parse_args()
@@ -56,3 +57,8 @@ def main() -> None:
         from film_reco.recommend import print_recommendations
 
         print_recommendations(settings, args.top)
+    elif args.command == "export-app":
+        from film_reco.app_data import build_space, export_app_data
+
+        export_app_data(settings)
+        build_space(settings)

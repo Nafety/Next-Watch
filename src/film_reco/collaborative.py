@@ -27,7 +27,17 @@ def _movielens(settings: Settings, name: str) -> pl.DataFrame:
 
 
 def movielens_vectors(settings: Settings) -> tuple[np.ndarray, np.ndarray]:
-    """(tmdb ids, normalized film vectors) learned from MovieLens."""
+    """(tmdb ids, normalized film vectors) for every film MovieLens knows, cached in data/."""
+    cache = settings.data_dir / "movielens_vectors.npz"
+    if cache.exists():
+        stored = np.load(cache)
+        return np.asarray(stored["ids"]), np.asarray(stored["vectors"])
+    ids, vectors = _learn_vectors(settings)
+    np.savez(cache, ids=ids, vectors=vectors)
+    return ids, vectors
+
+
+def _learn_vectors(settings: Settings) -> tuple[np.ndarray, np.ndarray]:
     ratings = _movielens(settings, "ratings.csv").select("userId", "movieId", "rating")
     counts = ratings.group_by("movieId").len()
     ratings = ratings.join(counts.filter(pl.col("len") >= MIN_RATINGS), on="movieId", how="semi")
@@ -48,7 +58,9 @@ def movielens_vectors(settings: Settings) -> tuple[np.ndarray, np.ndarray]:
     links = _movielens(settings, "links.csv").drop_nulls("tmdbId").unique("movieId")
     tmdb = dict(zip(links["movieId"], links["tmdbId"], strict=True))
     keep = [n for n, m in enumerate(movie_ids) if m in tmdb]
-    return np.array([tmdb[movie_ids[n]] for n in keep]), vectors[keep]
+    ids = np.array([tmdb[movie_ids[n]] for n in keep])
+    _, first = np.unique(ids, return_index=True)  # a few TMDB films have two MovieLens entries
+    return ids[first], vectors[keep][first].astype(np.float32)
 
 
 def collaborative_embeddings(settings: Settings, catalog: pl.DataFrame) -> np.ndarray:
