@@ -48,7 +48,8 @@ def main() -> None:
                 models.QualityScorer(catalog),
                 models.SimilarityScorer("Content (TMDB description)", ids, content),
                 models.SimilarityScorer("Collaborative (MovieLens)", ids, collaborative),
-                HybridScorer(catalog, content, collaborative),
+                HybridScorer(catalog, content, collaborative, mode="taste"),
+                HybridScorer(catalog, content, collaborative, mode="mix"),
             ]
 
         with pl.Config(tbl_rows=-1, float_precision=3, tbl_hide_dataframe_shape=True):
