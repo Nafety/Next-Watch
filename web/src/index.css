@@ -89,6 +89,28 @@ button {
   border-bottom-color: var(--accent);
 }
 
+.header nav {
+  align-items: center;
+}
+/* Leaves the current export, like a sign-out button */
+.signout {
+  margin-left: 6px;
+  padding: 5px 12px;
+  border: 1px solid rgb(240 106 90 / 0.55);
+  border-radius: 3px;
+  background: none;
+  color: var(--like);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.12s, border-color 0.12s;
+}
+.signout:hover {
+  border-color: var(--like);
+  background: rgb(240 106 90 / 0.1);
+}
+
 /* Landing */
 .hero {
   max-width: 560px;

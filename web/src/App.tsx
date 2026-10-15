@@ -82,7 +82,7 @@ export default function App() {
               Favourites{favorites.length ? ` (${favorites.length})` : ''}
             </button>
             <button
-              className="tab"
+              className="signout"
               title={`Recommendations for ${analysis.username}`}
               onClick={() => {
                 forgetAnalysis()
