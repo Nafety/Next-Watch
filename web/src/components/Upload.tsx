@@ -45,6 +45,10 @@ export function Upload({ onFile, error }: { onFile: (file: File) => void; error:
         <li>
           <b>3</b>Choose it above. The more films you have rated, the better.
         </li>
+        <li>
+          <b>4</b>Heart the films you want to see, then export your favourites and import the file on Letterboxd:
+          they are all added to your watchlist at once.
+        </li>
       </ol>
       {error && <p className="error">{error}</p>}
     </section>
