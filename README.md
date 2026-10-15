@@ -1,4 +1,7 @@
-# Next Watch
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="web/public/nextwatch-wordmark.svg">
+  <img alt="Next Watch" src="web/public/nextwatch-wordmark-light.svg" height="48">
+</picture>
 
 Film recommendations from a Letterboxd export, enriched with TMDB metadata: a research pipeline in Python, and a web app anyone can use, running entirely in the browser.
 

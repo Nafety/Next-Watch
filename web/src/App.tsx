@@ -70,8 +70,8 @@ export default function App() {
   return (
     <div className="page">
       <header className="header">
-        <button className="brand" onClick={() => setTab('films')}>
-          next watch
+        <button className="brand" onClick={() => setTab('films')} aria-label="Next Watch">
+          <img src="/nextwatch-wordmark.svg" alt="Next Watch" height="24" />
         </button>
         {analysis && (
           <nav>

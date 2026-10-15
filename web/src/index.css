@@ -58,12 +58,15 @@ button {
   border-bottom: 1px solid var(--line);
 }
 .brand {
+  display: flex;
   border: 0;
   background: none;
   padding: 0;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+}
+.brand img {
+  display: block;
+  height: 24px;
+  width: auto;
 }
 .header nav {
   display: flex;
