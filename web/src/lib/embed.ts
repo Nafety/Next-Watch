@@ -22,20 +22,26 @@ export function filmText(movie: Movie): string {
 type Extractor = (texts: string[], options: object) => Promise<{ tolist(): number[][] }>
 let extractor: Promise<Extractor> | null = null
 
+// Loaded from a CDN, not bundled: its WebAssembly runtime (25 MB) is over Cloudflare Pages' file size limit,
+// and only visitors with films outside the catalogue need it. The version is pinned.
+const TRANSFORMERS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1'
+interface TransformersModule {
+  pipeline: (task: string, model: string, options: object) => Promise<Extractor>
+}
+
 export async function embedFilms(
   movies: Movie[],
   info: EmbedderInfo,
   onDownload?: (percent: number) => void,
 ): Promise<Float32Array[]> {
   if (!movies.length) return []
-  extractor ??= import('@huggingface/transformers').then(
-    ({ pipeline }) =>
-      pipeline('feature-extraction', info.model, {
-        dtype: 'q8',
-        progress_callback: (event: { status: string; progress?: number }) => {
-          if (event.status === 'progress' && event.progress !== undefined) onDownload?.(event.progress)
-        },
-      }) as unknown as Promise<Extractor>,
+  extractor ??= (import(/* @vite-ignore */ TRANSFORMERS) as Promise<TransformersModule>).then(({ pipeline }) =>
+    pipeline('feature-extraction', info.model, {
+      dtype: 'q8',
+      progress_callback: (event: { status: string; progress?: number }) => {
+        if (event.status === 'progress' && event.progress !== undefined) onDownload?.(event.progress)
+      },
+    }),
   )
   const output = await (await extractor)(
     movies.map((m) => info.prefix + filmText(m)),
