@@ -48,7 +48,9 @@ function film(row: Record<string, string>): LetterboxdFilm {
   return { uri: row['Letterboxd URI'], title: row.Name, year: Number.isInteger(year) && year > 0 ? year : null }
 }
 
-export async function readExport(file: Blob): Promise<{ rated: RatedFilm[]; watchlist: LetterboxdFilm[] }> {
+export async function readExport(
+  file: Blob,
+): Promise<{ username: string; rated: RatedFilm[]; watchlist: LetterboxdFilm[] }> {
   const zip = await JSZip.loadAsync(file)
   const read = async (name: string) => {
     const entry = zip.file(name)
@@ -57,6 +59,7 @@ export async function readExport(file: Blob): Promise<{ rated: RatedFilm[]; watc
   const ratings = await read('ratings.csv')
   if (!zip.file('ratings.csv')) throw new Error('This ZIP has no ratings.csv: is it a Letterboxd export?')
   return {
+    username: (await read('profile.csv'))[0]?.Username || 'letterboxd',
     rated: ratings.map((row) => ({ ...film(row), rating: Number(row.Rating) })).filter((f) => f.rating > 0),
     watchlist: (await read('watchlist.csv')).map(film),
   }

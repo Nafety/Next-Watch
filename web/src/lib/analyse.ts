@@ -13,6 +13,7 @@ export type Step =
   | { step: 'scoring' }
 
 export interface Analysis {
+  username: string // the Letterboxd account: favourites are kept per account
   scored: Scored
   rated: number // rated films in the export
   found: number // of which found on TMDB
@@ -22,7 +23,7 @@ export interface Analysis {
 
 export async function analyse(file: Blob, data: AppData, onStep: (step: Step) => void): Promise<Analysis> {
   onStep({ step: 'reading' })
-  const { rated, watchlist } = await readExport(file)
+  const { username, rated, watchlist } = await readExport(file)
 
   const films = [...new Map([...rated, ...watchlist].map((f) => [f.uri, f])).values()]
   onStep({ step: 'matching', done: 0, total: films.length })
@@ -61,10 +62,79 @@ export async function analyse(file: Blob, data: AppData, onStep: (step: Step) =>
 
   onStep({ step: 'scoring' })
   return {
+    username,
     scored: score(data.catalog, ratedFilms, extras),
     rated: rated.length,
     found: ratedFilms.length,
     miniseries: links.filter((l) => l.series).length,
     watchlist: new Set(watchlist.map((f) => tmdbId.get(f.uri)?.id).filter((id): id is number => id != null)),
+  }
+}
+
+// The last analysis is kept in the browser (scores only, about 200 KB), so a reload goes straight back to it
+const SAVED = 'next-watch:analysis'
+
+function toBase64(array: ArrayBufferView): string {
+  const bytes = new Uint8Array(array.buffer, array.byteOffset, array.byteLength)
+  let text = ''
+  for (let i = 0; i < bytes.length; i += 8192) text += String.fromCharCode(...bytes.subarray(i, i + 8192))
+  return btoa(text)
+}
+const fromBase64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0)).buffer
+
+/** Identifies the catalogue version: scores saved with another catalogue are not reused. */
+function fingerprint(data: AppData): string {
+  const ids = data.catalog.ids
+  return `${ids.length}:${ids[0]}:${ids[ids.length - 1]}`
+}
+
+export function saveAnalysis(analysis: Analysis, data: AppData): void {
+  const { scored } = analysis
+  const saved = {
+    catalog: fingerprint(data),
+    username: analysis.username,
+    rated: analysis.rated,
+    found: analysis.found,
+    miniseries: analysis.miniseries,
+    watchlist: [...analysis.watchlist],
+    ids: toBase64(scored.ids),
+    quality: toBase64(scored.quality),
+    content: toBase64(scored.content),
+    collaborative: toBase64(scored.collaborative),
+  }
+  try {
+    localStorage.setItem(SAVED, JSON.stringify(saved))
+  } catch {
+    // storage full or unavailable: the visitor will import again after a reload
+  }
+}
+
+export function loadAnalysis(data: AppData): Analysis | null {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVED) ?? 'null')
+    if (!saved || saved.catalog !== fingerprint(data)) return null
+    return {
+      username: saved.username,
+      rated: saved.rated,
+      found: saved.found,
+      miniseries: saved.miniseries,
+      watchlist: new Set(saved.watchlist),
+      scored: {
+        ids: new Int32Array(fromBase64(saved.ids)),
+        quality: new Float32Array(fromBase64(saved.quality)),
+        content: new Float32Array(fromBase64(saved.content)),
+        collaborative: new Float32Array(fromBase64(saved.collaborative)),
+      },
+    }
+  } catch {
+    return null
+  }
+}
+
+export function forgetAnalysis(): void {
+  try {
+    localStorage.removeItem(SAVED)
+  } catch {
+    // nothing saved
   }
 }

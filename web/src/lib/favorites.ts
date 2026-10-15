@@ -1,6 +1,6 @@
 // Favorites, kept in the browser (localStorage) so they survive reloads; exportable for Letterboxd.
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export interface Favorite {
   id: number
@@ -8,30 +8,32 @@ export interface Favorite {
   year: number | null
 }
 
-const KEY = 'next-watch:favorites'
+const key = (username: string) => `next-watch:favorites:${username}`
 
-function load(): Favorite[] {
+function load(username: string): Favorite[] {
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? '[]') as Favorite[]
+    return JSON.parse(localStorage.getItem(key(username)) ?? '[]') as Favorite[]
   } catch {
     return [] // private window, blocked storage...
   }
 }
 
-export function useFavorites() {
-  const [favorites, setFavorites] = useState<Favorite[]>(load)
-  useEffect(() => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(favorites))
-    } catch {
-      // storage unavailable: favorites stay for this visit only
-    }
-  }, [favorites])
+/** Favourites of one Letterboxd account, kept in this browser. */
+export function useFavorites(username: string) {
+  const [state, setState] = useState(() => ({ username, favorites: load(username) }))
+  // Another account: its own favourites
+  const favorites = state.username === username ? state.favorites : load(username)
 
+  const save = (next: Favorite[]) => {
+    setState({ username, favorites: next })
+    try {
+      localStorage.setItem(key(username), JSON.stringify(next))
+    } catch {
+      // storage unavailable: favourites stay for this visit only
+    }
+  }
   const toggle = (film: Favorite) =>
-    setFavorites((current) =>
-      current.some((f) => f.id === film.id) ? current.filter((f) => f.id !== film.id) : [film, ...current],
-    )
+    save(favorites.some((f) => f.id === film.id) ? favorites.filter((f) => f.id !== film.id) : [film, ...favorites])
   return { favorites, isFavorite: (id: number) => favorites.some((f) => f.id === id), toggle }
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Results } from './components/Results'
 import { Upload } from './components/Upload'
-import { analyse, type Analysis, type Step } from './lib/analyse'
+import { analyse, forgetAnalysis, loadAnalysis, saveAnalysis, type Analysis, type Step } from './lib/analyse'
 import { loadData, type AppData } from './lib/data'
 import { useFavorites } from './lib/favorites'
 
@@ -37,11 +37,17 @@ export default function App() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<'films' | 'favourites'>('films')
-  const { favorites, isFavorite, toggle } = useFavorites()
+  const { favorites, isFavorite, toggle } = useFavorites(analysis?.username ?? '')
 
   // The catalogue (about 9 MB) loads while the visitor exports their data
   useEffect(() => {
-    loadData().then(setData, () => setError('Could not load the film catalogue. Please reload the page.'))
+    loadData().then(
+      (loaded) => {
+        setData(loaded)
+        setAnalysis(loadAnalysis(loaded)) // back to the last recommendations after a reload
+      },
+      () => setError('Could not load the film catalogue. Please reload the page.'),
+    )
   }, [])
 
   const start = async (file: File) => {
@@ -51,6 +57,8 @@ export default function App() {
       setData(catalogue)
       const result = await analyse(file, catalogue, setStep)
       if (result.found < 10) throw new Error('Rate at least 10 films on Letterboxd for meaningful recommendations.')
+      saveAnalysis(result, catalogue)
+      setTab('films')
       setAnalysis(result)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong with this file.')
@@ -62,7 +70,7 @@ export default function App() {
   return (
     <div className="page">
       <header className="header">
-        <button className="brand" onClick={() => setAnalysis(null)}>
+        <button className="brand" onClick={() => setTab('films')}>
           next watch
         </button>
         {analysis && (
@@ -72,6 +80,16 @@ export default function App() {
             </button>
             <button className="tab" aria-pressed={tab === 'favourites'} onClick={() => setTab('favourites')}>
               Favourites{favorites.length ? ` (${favorites.length})` : ''}
+            </button>
+            <button
+              className="tab"
+              title={`Recommendations for ${analysis.username}`}
+              onClick={() => {
+                forgetAnalysis()
+                setAnalysis(null)
+              }}
+            >
+              Change export
             </button>
           </nav>
         )}
