@@ -1,0 +1,15 @@
+// Cloudflare Worker: the static site in dist/, and the TMDB relay in worker/index.ts for /api/*
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "next-watch",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // The relay runs before the static files for these paths
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true }
+}
