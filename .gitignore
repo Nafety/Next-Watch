@@ -10,6 +10,4 @@ wheels/
 
 # Local data and secrets
 .env
-# data/ is local, except the web app's files (shipped for deployment)
-data/*
-!data/app/
+data/
