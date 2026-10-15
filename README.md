@@ -1,6 +1,6 @@
 # film-reco
 
-Film recommendations from a Letterboxd export, enriched with TMDB metadata, with a web app anyone can use.
+Film recommendations from a Letterboxd export, enriched with TMDB metadata, with a web app anyone can use (*Next Watch*).
 
 ## How it works
 
@@ -12,7 +12,8 @@ Film recommendations from a Letterboxd export, enriched with TMDB metadata, with
 4. **Content**: each film is embedded from its TMDB description (genres, keywords, director, cast, overview) with `multilingual-e5-small`. Every rated film votes for similar films, weighted by its rating minus the user's mean rating.
 5. **Collaborative**: a truncated SVD of the [MovieLens 32M](https://grouplens.org/datasets/movielens/32m/) ratings gives each film a 128-dimension vector (close when liked by the same people); same voting as above. MovieLens knows 87 % of the catalog (it stops in 2023).
 6. **Hybrid**: weighted sum of the quality, content and collaborative scores, each standardized over the catalog. Three modes: *mix* (equal weights), *taste* (content + collaborative only: close to one's ratings) and *public* (TMDB rating only). Learning the weights with a ridge regression did worse (AUC 0.68): ~160 ratings per fold are too few to fit them reliably.
-7. **Web app** (Streamlit): the catalog's vectors are computed once and shipped with the app (`data/app/`, 15 MB); for a visitor, only their own films are searched on TMDB and, when outside the catalog, embedded on the fly. Visitors pick a mode, filter by year and genre, page through the ranking, and keep favorites in a tab, downloadable as a CSV that Letterboxd can import.
+7. **Web app** (`web/`, React + TypeScript, static on Cloudflare Pages): the same scoring, ported to TypeScript and checked against Python by a parity test, runs **in the visitor's browser**, so ratings never leave it. The catalog's vectors are shipped as int8 (8.7 MB; the evaluation does not change). A Pages Function relays TMDB requests and keeps the API key secret. Rated films outside the catalog get their content vector in the browser (Transformers.js, same e5 model; cosine 0.995 with Python's). Multilingual e5 was kept over lighter English models (bge-small, MiniLM: content AUC 0.63 vs 0.71).
+8. **Streamlit app** (first version): the catalog's vectors are computed once and shipped with the app (`data/app/`, 15 MB); for a visitor, only their own films are searched on TMDB and, when outside the catalog, embedded on the fly. Visitors pick a mode, filter by year and genre, page through the ranking, and keep favorites in a tab, downloadable as a CSV that Letterboxd can import.
 
 ## Results
 
@@ -41,7 +42,13 @@ uv run film-reco evaluate          # results table
 uv run film-reco recommend         # top 20 unrated films, with the share of each signal
 uv run film-reco export-app        # -> data/app/, the web app's data (committed, for deployment)
 uv run streamlit run src/film_reco/app.py
+
+cd web && npm install
+npm test                           # TypeScript scoring = Python scoring
+npm run dev:pages                  # site + TMDB relay on localhost:8788 (TMDB_API_KEY in web/.dev.vars)
 ```
+
+**Deploy the web app** on Cloudflare Pages: connect the repository, root directory `web`, build command `npm run build`, output directory `dist`, and add the secret `TMDB_API_KEY` in the project settings.
 
 **Deploy** on [Streamlit Community Cloud](https://share.streamlit.io): new app from this repository, main file `src/film_reco/app.py`, Python 3.12, and the secret `TMDB_API_KEY = "..."`. Dependencies come from `requirements.txt`, generated from `uv.lock` (see its header).
 

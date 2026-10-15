@@ -7,6 +7,12 @@ import polars as pl
 
 from film_reco.config import Settings
 
+# Embedding model -> prefix it expects before a document (e5 was trained with "passage: ")
+EMBEDDERS = {
+    "intfloat/multilingual-e5-small": "passage: ",
+    "sentence-transformers/all-MiniLM-L6-v2": "",
+    "BAAI/bge-small-en-v1.5": "",
+}
 EMBEDDER = "intfloat/multilingual-e5-small"
 
 
@@ -24,9 +30,9 @@ def film_text(film: dict[str, object]) -> str:
     )
 
 
-def content_embeddings(settings: Settings, catalog: pl.DataFrame) -> np.ndarray:
+def content_embeddings(settings: Settings, catalog: pl.DataFrame, embedder: str = EMBEDDER) -> np.ndarray:
     """One normalized vector per catalog film (same order), cached in data/ until the catalog changes."""
-    cache = settings.data_dir / "content_embeddings.npz"
+    cache = settings.data_dir / f"content_embeddings_{embedder.split('/')[-1]}.npz"
     ids = catalog["tmdb_id"].to_numpy()
     if cache.exists():
         stored = np.load(cache)
@@ -36,15 +42,17 @@ def content_embeddings(settings: Settings, catalog: pl.DataFrame) -> np.ndarray:
 
     from sentence_transformers import SentenceTransformer
 
-    model = SentenceTransformer(EMBEDDER, device="cpu")
-    vectors = encode_films(model, list(catalog.iter_rows(named=True)), progress=True)
+    model = SentenceTransformer(embedder, device="cpu")
+    vectors = encode_films(model, list(catalog.iter_rows(named=True)), EMBEDDERS[embedder], progress=True)
     np.savez(cache, ids=ids, vectors=vectors)
     return vectors
 
 
-def encode_films(model: Any, films: list[dict[str, object]], progress: bool = False) -> np.ndarray:
+def encode_films(
+    model: Any, films: list[dict[str, object]], prefix: str = EMBEDDERS[EMBEDDER], progress: bool = False
+) -> np.ndarray:
     """Normalized embedding of each film's description (model: a loaded SentenceTransformer)."""
-    texts = [f"passage: {film_text(film)}" for film in films]
+    texts = [prefix + film_text(film) for film in films]
     return np.asarray(
         model.encode(texts, batch_size=64, normalize_embeddings=True, show_progress_bar=progress)
     )

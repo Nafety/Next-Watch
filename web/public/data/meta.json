@@ -1,0 +1,1 @@
+{"embedder": {"model": "Xenova/multilingual-e5-small", "prefix": "passage: ", "pooling": "mean"}, "dims": {"content": 384, "collaborative": 128, "movielens": 128}}

@@ -9,7 +9,7 @@ def main() -> None:
     commands.add_parser("ingest", help="read the Letterboxd export and fetch TMDB metadata")
     commands.add_parser("catalog", help="build the catalog of candidate films")
     commands.add_parser("evaluate", help="cross-validate every scorer on the user's ratings")
-    commands.add_parser("export-app", help="write the web app's data (data/app/)")
+    commands.add_parser("export-app", help="write the apps' data (data/app/ and web/public/data/)")
     recommend = commands.add_parser("recommend", help="best unrated films for the user")
     recommend.add_argument("--top", type=int, default=20)
     args = parser.parse_args()
@@ -59,6 +59,7 @@ def main() -> None:
 
         print_recommendations(settings, args.top)
     elif args.command == "export-app":
-        from film_reco.app_data import export_app_data
+        from film_reco.app_data import export_app_data, export_web_data
 
         export_app_data(settings)
+        export_web_data(settings)
