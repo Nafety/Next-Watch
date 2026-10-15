@@ -174,6 +174,20 @@ export function Results(props: {
         </label>
       </div>
       <p className="mode-help">{MODE_LABELS[mode].help}</p>
+      <dl className="legend">
+        <div>
+          <dt>Quality</dt>
+          <dd>Its rating on TMDB, trusted more when many people voted.</dd>
+        </div>
+        <div>
+          <dt>Content</dt>
+          <dd>How close its story, genres, director and cast are to the films you rated well.</dd>
+        </div>
+        <div>
+          <dt>Taste</dt>
+          <dd>Whether people who rate films like you liked it (MovieLens, 200,000 people).</dd>
+        </div>
+      </dl>
       {shown.length ? (
         <div className="grid">{shown.map((f) => card(f.id))}</div>
       ) : (

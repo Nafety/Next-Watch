@@ -22,11 +22,21 @@ function Heart({ filled }: { filled: boolean }) {
   )
 }
 
+/** A standardized signal in words (it is measured in standard deviations from the catalogue average). */
+function describe(value: number): string {
+  if (value >= 2) return 'far above average'
+  if (value >= 1) return 'well above average'
+  if (value >= 0.3) return 'above average'
+  if (value > -0.3) return 'average'
+  if (value > -1) return 'below average'
+  return 'well below average'
+}
+
 /** A standardized signal as a bar: -2 standard deviations or less is empty, +4 or more is full. */
 function Signal({ label, value }: { label: string; value: number }) {
   const width = Math.min(100, Math.max(4, ((value + 2) / 6) * 100))
   return (
-    <div className="signal" title={`${label}: ${value >= 0 ? '+' : ''}${value.toFixed(1)} standard deviations`}>
+    <div className="signal" title={`${label}: ${describe(value)}`}>
       <span>{label}</span>
       <i>
         <b style={{ width: `${width}%` }} />
