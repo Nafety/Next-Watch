@@ -44,18 +44,18 @@ export function Results(props: {
 }) {
   const { analysis, data, tab, favorites, isFavorite, toggle } = props
   const row = useMemo(() => new Map([...data.catalog.ids].map((id, i) => [id, i])), [data])
-  const years = useMemo(() => {
-    const all = data.catalog.years.filter((y): y is number => y !== null)
-    return [Math.min(...all), Math.max(...all)]
+  const decades = useMemo(() => {
+    const years = data.catalog.years.filter((y): y is number => y !== null)
+    const set = new Set(years.map((y) => Math.floor(y / 10) * 10))
+    return [...set].sort((a, b) => b - a)
   }, [data])
 
   const [mode, setMode] = useState<Mode>('mix')
-  const [from, setFrom] = useState(years[0])
-  const [to, setTo] = useState(years[1])
-  const [genres, setGenres] = useState<string[]>([])
+  const [decade, setDecade] = useState<number | null>(null)
+  const [genre, setGenre] = useState<string | null>(null)
   const [hideWatchlist, setHideWatchlist] = useState(false)
   // The page belongs to one view: a new mode or filter starts again from the best films
-  const view = JSON.stringify([mode, from, to, genres, hideWatchlist])
+  const view = JSON.stringify([mode, decade, genre, hideWatchlist])
   const [paging, setPaging] = useState({ view, page: 0 })
   const page = paging.view === view ? paging.page : 0
   const setPage = (next: number) => setPaging({ view, page: next })
@@ -66,11 +66,11 @@ export function Results(props: {
       ranked.filter((film) => {
         const i = row.get(film.id)!
         const year = data.catalog.years[i]
-        if (year === null || year < from || year > to) return false
-        if (genres.length && !data.catalog.genres[i].some((g) => genres.includes(g))) return false
+        if (decade !== null && (year === null || Math.floor(year / 10) * 10 !== decade)) return false
+        if (genre !== null && !data.catalog.genres[i].includes(genre)) return false
         return !(hideWatchlist && analysis.watchlist.has(film.id))
       }),
-    [ranked, row, data, from, to, genres, hideWatchlist, analysis],
+    [ranked, row, data, decade, genre, hideWatchlist, analysis],
   )
 
   const shown = filtered.slice(page * PAGE, page * PAGE + PAGE)
@@ -93,14 +93,6 @@ export function Results(props: {
   }
 
   if (tab === 'favourites') {
-    if (!favorites.length) {
-      return (
-        <div className="empty">
-          <h2>No favourites yet</h2>
-          <p>Use the heart on a poster to keep a film here. Favourites are saved in this browser.</p>
-        </div>
-      )
-    }
     const download = () => {
       const url = URL.createObjectURL(new Blob([letterboxdCsv(favorites)], { type: 'text/csv' }))
       Object.assign(document.createElement('a'), { href: url, download: 'favourites.csv' }).click()
@@ -108,78 +100,101 @@ export function Results(props: {
     }
     return (
       <>
-        <div className="controls">
-          <span className="field">
-            {favorites.length} film{favorites.length > 1 ? 's' : ''}
+        <div className="section">
+          <span className="label">
+            Favourites{favorites.length ? ` · ${favorites.length}` : ''}
           </span>
-          <button className="button" onClick={download}>
-            Download for Letterboxd
-          </button>
-          <span className="field">Import the file into your watchlist or a list on Letterboxd.</span>
+          {favorites.length > 0 && (
+            <button className="button" onClick={download}>
+              Export for Letterboxd
+            </button>
+          )}
         </div>
-        <div className="grid">{favorites.map((f) => card(f.id))}</div>
+        {favorites.length ? (
+          <>
+            <p className="mode-help">Import the exported file into your watchlist or a list on Letterboxd.</p>
+            <div className="grid">{favorites.map((f) => card(f.id))}</div>
+          </>
+        ) : (
+          <div className="empty">
+            <h2>No favourites yet</h2>
+            <p>Use the heart on a poster to keep a film here. Favourites are saved in this browser.</p>
+          </div>
+        )}
       </>
     )
   }
 
   return (
     <>
-      <p className="summary">
-        {analysis.found} of your {analysis.rated} rated films found on TMDB
-        {analysis.miniseries ? ` (${analysis.miniseries} miniseries left out)` : ''}.
-      </p>
-      <div className="controls">
-        <div className="segmented" role="group" aria-label="Recommend">
+      <div className="section">
+        <span className="label">Recommended for you</span>
+        <span className="note">
+          Based on {analysis.found} of your {analysis.rated} rated films
+          {analysis.miniseries ? `, ${analysis.miniseries} miniseries left out` : ''}
+        </span>
+      </div>
+      <div className="filters">
+        <div className="modes" role="group" aria-label="Recommend">
           {(Object.keys(MODE_LABELS) as Mode[]).map((m) => (
             <button key={m} aria-pressed={mode === m} onClick={() => setMode(m)}>
               {MODE_LABELS[m].label}
             </button>
           ))}
         </div>
-        <label className="field">
-          From
-          <input type="number" value={from} min={years[0]} max={to} onChange={(e) => setFrom(Number(e.target.value))} />
-          to
-          <input type="number" value={to} min={from} max={years[1]} onChange={(e) => setTo(Number(e.target.value))} />
-        </label>
-        <label className="field">
+        <select
+          className="select"
+          aria-label="Decade"
+          value={decade ?? ''}
+          onChange={(e) => setDecade(e.target.value ? Number(e.target.value) : null)}
+        >
+          <option value="">Any decade</option>
+          {decades.map((d) => (
+            <option key={d} value={d}>
+              {d}s
+            </option>
+          ))}
+        </select>
+        <select
+          className="select"
+          aria-label="Genre"
+          value={genre ?? ''}
+          onChange={(e) => setGenre(e.target.value || null)}
+        >
+          <option value="">Any genre</option>
+          {data.genreNames.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+        <label className="toggle">
           <input type="checkbox" checked={hideWatchlist} onChange={(e) => setHideWatchlist(e.target.checked)} />
-          Hide my watchlist
+          Hide watchlist
         </label>
       </div>
       <p className="mode-help">{MODE_LABELS[mode].help}</p>
-      <div className="chips" role="group" aria-label="Genres">
-        {data.genreNames.map((g) => (
-          <button
-            key={g}
-            className="chip"
-            aria-pressed={genres.includes(g)}
-            onClick={() => setGenres((gs) => (gs.includes(g) ? gs.filter((x) => x !== g) : [...gs, g]))}
-          >
-            {g}
-          </button>
-        ))}
-      </div>
       {shown.length ? (
         <div className="grid">{shown.map((f) => card(f.id))}</div>
       ) : (
         <div className="empty">
           <h2>No films with these filters</h2>
-          <p>Widen the years or remove a genre.</p>
+          <p>Try another decade or genre.</p>
         </div>
       )}
-      <div className="pager">
-        <button className="button" disabled={page === 0} onClick={() => setPage(page - 1)}>
-          Previous
-        </button>
-        <span>
-          {filtered.length ? `${page * PAGE + 1}–${Math.min(filtered.length, (page + 1) * PAGE)}` : 0} of{' '}
-          {filtered.length.toLocaleString('en')}
-        </span>
-        <button className="button primary" disabled={(page + 1) * PAGE >= filtered.length} onClick={() => setPage(page + 1)}>
-          More films
-        </button>
-      </div>
+      {filtered.length > PAGE && (
+        <div className="pager">
+          <button className="button" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            Previous
+          </button>
+          <span>
+            {page * PAGE + 1}–{Math.min(filtered.length, (page + 1) * PAGE)} of {filtered.length.toLocaleString('en')}
+          </span>
+          <button className="button" disabled={(page + 1) * PAGE >= filtered.length} onClick={() => setPage(page + 1)}>
+            More films
+          </button>
+        </div>
+      )}
     </>
   )
 }

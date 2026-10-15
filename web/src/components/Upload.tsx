@@ -5,13 +5,10 @@ export function Upload({ onFile, error }: { onFile: (file: File) => void; error:
   const [over, setOver] = useState(false)
   return (
     <section className="hero">
-      <h1>
-        What to watch <em>next</em>, from your Letterboxd ratings.
-      </h1>
+      <h1>Find what to watch next, from your Letterboxd ratings.</h1>
       <p>
-        Drop your Letterboxd export: each film you have not seen gets a score from its description, from the
-        taste of people who rate like you, and from public opinion. Everything runs in your browser; your
-        ratings are never sent anywhere.
+        Each film you have not seen is scored on its description, on the taste of people who rate like you, and
+        on public opinion. It all runs in your browser: your ratings are never sent anywhere.
       </p>
       <button
         className={`drop ${over ? 'over' : ''}`}
@@ -28,8 +25,8 @@ export function Upload({ onFile, error }: { onFile: (file: File) => void; error:
           if (file) onFile(file)
         }}
       >
-        <strong>Drop your Letterboxd export here</strong>
-        <span>or click to choose the .zip file</span>
+        <span className="button primary">Choose your export</span>
+        <span>or drop the .zip file here</span>
       </button>
       <input
         ref={input}
@@ -38,12 +35,18 @@ export function Upload({ onFile, error }: { onFile: (file: File) => void; error:
         hidden
         onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
       />
-      {error && <p className="error">{error}</p>}
       <ol className="steps">
-        <li>On letterboxd.com, open Settings, then the Data tab.</li>
-        <li>Click Export your data: a .zip file downloads.</li>
-        <li>Drop it above. Rate at least a few dozen films for good results.</li>
+        <li>
+          <b>1</b>On letterboxd.com, open Settings, then the Data tab.
+        </li>
+        <li>
+          <b>2</b>Click Export your data. A .zip file downloads.
+        </li>
+        <li>
+          <b>3</b>Choose it above. The more films you have rated, the better.
+        </li>
       </ol>
+      {error && <p className="error">{error}</p>}
     </section>
   )
 }

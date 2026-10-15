@@ -63,12 +63,12 @@ export default function App() {
     <div className="page">
       <header className="header">
         <button className="brand" onClick={() => setAnalysis(null)}>
-          Next <em>Watch</em>
+          next watch
         </button>
         {analysis && (
           <nav>
             <button className="tab" aria-pressed={tab === 'films'} onClick={() => setTab('films')}>
-              Recommendations
+              Films
             </button>
             <button className="tab" aria-pressed={tab === 'favourites'} onClick={() => setTab('favourites')}>
               Favourites{favorites.length ? ` (${favorites.length})` : ''}
