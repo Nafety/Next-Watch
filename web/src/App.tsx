@@ -37,7 +37,7 @@ export default function App() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<'films' | 'favourites'>('films')
-  const { favorites, isFavorite, toggle } = useFavorites(analysis?.username ?? '')
+  const { favorites, isFavorite, toggle, clear } = useFavorites(analysis?.username ?? '')
 
   // The catalogue (about 9 MB) loads while the visitor exports their data
   useEffect(() => {
@@ -105,6 +105,7 @@ export default function App() {
             favorites={favorites}
             isFavorite={isFavorite}
             toggle={toggle}
+            clearFavorites={clear}
           />
         ) : (
           <Upload onFile={start} error={error} />

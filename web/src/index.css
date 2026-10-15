@@ -450,6 +450,35 @@ button {
 .button.primary:hover:not(:disabled) {
   filter: brightness(1.08);
 }
+.button.quiet {
+  background: none;
+  color: var(--muted);
+}
+.button.quiet:hover:not(:disabled) {
+  color: var(--like);
+  border-color: rgb(240 106 90 / 0.55);
+}
+.button.danger {
+  background: none;
+  border-color: rgb(240 106 90 / 0.55);
+  color: var(--like);
+  font-weight: 600;
+}
+.button.danger:hover:not(:disabled) {
+  border-color: var(--like);
+  background: rgb(240 106 90 / 0.1);
+}
+.actions,
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.confirm {
+  color: var(--text);
+  font-size: 13px;
+}
 .pager {
   display: flex;
   align-items: center;

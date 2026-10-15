@@ -34,7 +34,8 @@ export function useFavorites(username: string) {
   }
   const toggle = (film: Favorite) =>
     save(favorites.some((f) => f.id === film.id) ? favorites.filter((f) => f.id !== film.id) : [film, ...favorites])
-  return { favorites, isFavorite: (id: number) => favorites.some((f) => f.id === id), toggle }
+  const clear = () => save([])
+  return { favorites, isFavorite: (id: number) => favorites.some((f) => f.id === id), toggle, clear }
 }
 
 /** Letterboxd's import format (tmdbID gives an exact match): import into a list or your watchlist. */

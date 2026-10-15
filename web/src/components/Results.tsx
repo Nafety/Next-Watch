@@ -41,8 +41,9 @@ export function Results(props: {
   favorites: Favorite[]
   isFavorite: (id: number) => boolean
   toggle: (film: Favorite) => void
+  clearFavorites: () => void
 }) {
-  const { analysis, data, tab, favorites, isFavorite, toggle } = props
+  const { analysis, data, tab, favorites, isFavorite, toggle, clearFavorites } = props
   const row = useMemo(() => new Map([...data.catalog.ids].map((id, i) => [id, i])), [data])
   const decades = useMemo(() => {
     const years = data.catalog.years.filter((y): y is number => y !== null)
@@ -54,6 +55,7 @@ export function Results(props: {
   const [decade, setDecade] = useState<number | null>(null)
   const [genre, setGenre] = useState<string | null>(null)
   const [hideWatchlist, setHideWatchlist] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   // The page belongs to one view: a new mode or filter starts again from the best films
   const view = JSON.stringify([mode, decade, genre, hideWatchlist])
   const [paging, setPaging] = useState({ view, page: 0 })
@@ -104,11 +106,33 @@ export function Results(props: {
           <span className="label">
             Favourites{favorites.length ? ` · ${favorites.length}` : ''}
           </span>
-          {favorites.length > 0 && (
-            <button className="button" onClick={download}>
-              Export for Letterboxd
-            </button>
-          )}
+          {favorites.length > 0 &&
+            (confirmClear ? (
+              <span className="confirm" role="alert">
+                Remove all {favorites.length} favourite{favorites.length > 1 ? 's' : ''} of {analysis.username}?
+                <button
+                  className="button danger"
+                  onClick={() => {
+                    clearFavorites()
+                    setConfirmClear(false)
+                  }}
+                >
+                  Remove
+                </button>
+                <button className="button" onClick={() => setConfirmClear(false)}>
+                  Cancel
+                </button>
+              </span>
+            ) : (
+              <span className="actions">
+                <button className="button" onClick={download}>
+                  Export for Letterboxd
+                </button>
+                <button className="button quiet" onClick={() => setConfirmClear(true)}>
+                  Clear favourites
+                </button>
+              </span>
+            ))}
         </div>
         {favorites.length ? (
           <>
